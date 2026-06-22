@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vet Monitor — العيادة والصيدلية البيطرية</title>
+  <meta name="description" content="نظام عملي وواضح لإدارة مخزون الأدوية البيطرية." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        <div class="sidebar__brand-icon">🐾</div>
+        <div class="sidebar__brand-text">
+          <div class="sidebar__title">Vet Monitor</div>
+          <div class="sidebar__subtitle">العيادة والصيدلية</div>
+        </div>
+      </div>
+      
+      <nav class="sidebar__nav">
+        <button class="tab-btn active" onclick="switchTab('inventory')">
+          <span class="nav-icon">📦</span> الأدوية المتوفرة
+        </button>
+        <button class="tab-btn" onclick="switchTab('alerts')">
+          <span class="nav-icon">⏰</span> التنبيهات والنشاط
+        </button>
+        <button class="tab-btn" onclick="switchTab('admin')">
+          <span class="nav-icon">⚙️</span> النظام والإمداد
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        Vet Monitor &copy; 2026
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main-content">
+      
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar__status">
+          <span class="header__dot"></span>
+          <span id="statusText">جاري الاتصال…</span>
+        </div>
+        <div class="topbar__actions">
+          <button class="btn-primary" onclick="openModal('deductModal')" style="background: var(--danger);">➖ صرف دواء</button>
+          <button class="btn-primary" onclick="openModal('receiveModal')" style="background: var(--success);">➕ إضافة للمخزون</button>
+        </div>
+      </header>
+
+      <!-- CONTENT WRAPPER -->
+      <div class="content-wrapper">
+        
+        <!-- ═══ TAB: INVENTORY (Main Doctor View) ═══ -->
+        <div id="tab-inventory" class="tab-content active">
+          <div class="panel">
+            <div class="panel__header">
+              <div class="panel__title">جدول المخزون الحالي</div>
+              <button class="btn-refresh" onclick="loadAll()" title="تحديث">
+                <span class="btn-refresh__icon">↻</span> تحديث
+              </button>
+            </div>
+            <div class="panel__body" style="height: calc(100vh - 200px); overflow-y: auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="sortable" onclick="sortInventory('product_name')">اسم الدواء <span class="sort-icon" id="sort-icon-product_name"></span></th>
+                    <th class="sortable" onclick="sortInventory('category')">الفئة <span class="sort-icon" id="sort-icon-category"></span></th>
+                    <th class="sortable" onclick="sortInventory('location_name')">الموقع (الفرع) <span class="sort-icon" id="sort-icon-location_name"></span></th>
+                    <th class="sortable" onclick="sortInventory('batch_no')">رقم التشغيلة <span class="sort-icon" id="sort-icon-batch_no"></span></th>
+                    <th class="sortable" onclick="sortInventory('expiry_date')">تاريخ الانتهاء <span class="sort-icon" id="sort-icon-expiry_date"></span></th>
+                    <th class="sortable" onclick="sortInventory('quantity')">الكمية المتوفرة <span class="sort-icon" id="sort-icon-quantity"></span></th>
+                  </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                  <tr><td colspan="6" class="empty-state">جاري تحميل المخزون...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB: ALERTS & ACTIVITY ═══ -->
+        <div id="tab-alerts" class="tab-content">
+          <section class="stats" id="statsGrid">
+            <div class="stat-card fade-in">
+              <div class="stat-card__icon stat-card__icon--red">⚠️</div>
+              <div><div class="stat-card__value" id="statLowStock">—</div><div class="stat-card__label">أدوية منخفضة</div></div>
+            </div>
+            <div class="stat-card fade-in">
+              <div class="stat-card__icon stat-card__icon--amber">⏰</div>
+              <div><div class="stat-card__value" id="statNearExpiry">—</div><div class="stat-card__label">قريب من الانتهاء</div></div>
+            </div>
+            <div class="stat-card fade-in">
+              <div class="stat-card__icon stat-card__icon--teal">🏥</div>
+              <div><div class="stat-card__value" id="statLocations">—</div><div class="stat-card__label">الفروع النشطة</div></div>
+            </div>
+          </section>
+
+          <div class="panels">
+            <!-- Near-Expiry Alerts -->
+            <div class="panel fade-in">
+              <div class="panel__header">
+                <div class="panel__title">⏰ أدوية تقترب من الانتهاء</div>
+                <button class="btn-refresh" onclick="triggerScan()" title="فحص الصلاحية" id="btnScan">
+                  <span class="btn-refresh__icon">🔍</span> فحص
+                </button>
+              </div>
+              <div class="panel__body" id="nearExpiryList">
+                <div class="empty-state"><div class="empty-state__icon">📭</div>جاري التحميل…</div>
+              </div>
+            </div>
+
+            <!-- Low Stock -->
+            <div class="panel fade-in">
+              <div class="panel__header">
+                <div class="panel__title">🔻 أدوية تحتاج لإعادة طلب</div>
+              </div>
+              <div class="panel__body" id="lowStockList">
+                <div class="empty-state"><div class="empty-state__icon">📭</div>جاري التحميل…</div>
+              </div>
+            </div>
+
+            <!-- Recent Movements -->
+            <div class="panel fade-in" style="grid-column: 1 / -1;">
+              <div class="panel__header">
+                <div class="panel__title">📋 سجل الحركات الأخير (صرف وإضافة)</div>
+              </div>
+              <div class="panel__body" id="movementsList">
+                <div class="empty-state"><div class="empty-state__icon">📭</div>جاري التحميل…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB: ADMIN & SUPPLY CHAIN ═══ -->
+        <div id="tab-admin" class="tab-content">
+          <div class="section-header" style="margin-top:0;">
+            <div class="section-header__title">🔄 عمليات الإمداد المركزية</div>
+          </div>
+          <div class="panel fade-in" style="margin-bottom: 2rem;">
+            <div class="panel__header"><div class="panel__title">نقل مخزون بين الفروع (خاص بمدير الإمداد)</div></div>
+            <div class="panel__body">
+              <form id="transferForm" onsubmit="handleTransfer(event)" style="display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 1rem; align-items: end; padding: 1.5rem;">
+                <div class="form-group" style="margin:0;">
+                  <label>من فرع</label>
+                  <select name="from_location_id" required class="select-location"></select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>إلى فرع</label>
+                  <select name="to_location_id" required class="select-location"></select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>الدواء</label>
+                  <select name="product_id" required class="select-product"></select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>الكمية المنقولة</label>
+                  <input type="number" name="quantity" min="1" required>
+                </div>
+                <button type="submit" class="btn-primary" style="height: 38px;">نقل</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <div class="section-header__title">إعدادات النظام (إضافة تعريفات جديدة)</div>
+          </div>
+          <div class="panels" style="grid-template-columns: repeat(3, 1fr); align-items: start;">
+            
+            <!-- Add Product -->
+            <div class="panel fade-in">
+              <div class="panel__header"><div class="panel__title">💊 تعريف دواء جديد</div></div>
+              <div class="panel__body">
+                <form id="addProductForm" onsubmit="adminAddProduct(event)">
+                  <div class="form-group" style="display: none;">
+                    <label>الرمز (SKU)</label>
+                    <input type="text" name="sku">
+                  </div>
+                  <div class="form-group">
+                    <label>اسم الدواء</label>
+                    <input type="text" name="name" required placeholder="مثال: Amoxicillin">
+                  </div>
+                  <div class="form-group">
+                    <label>الفئة</label>
+                    <input type="text" name="category" required placeholder="مثال: مضادات حيوية">
+                  </div>
+                  <button type="submit" class="btn-primary" style="width:100%">حفظ الدواء</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Add Batch -->
+            <div class="panel fade-in">
+              <div class="panel__header"><div class="panel__title">📦 تسجيل تشغيلة جديدة (Batch)</div></div>
+              <div class="panel__body">
+                <form id="addBatchForm" onsubmit="adminAddBatch(event)">
+                  <div class="form-group">
+                    <label>رقم التشغيلة</label>
+                    <input type="text" name="batch_no" required placeholder="مثال: B-2026-001">
+                  </div>
+                  <div class="form-group">
+                    <label>الدواء</label>
+                    <select name="product_id" required class="select-product"></select>
+                  </div>
+                  <div class="form-group">
+                    <label>تاريخ الانتهاء</label>
+                    <input type="date" name="expiry_date" required>
+                  </div>
+                  <button type="submit" class="btn-primary" style="width:100%">حفظ التشغيلة</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Add Location -->
+            <div class="panel fade-in">
+              <div class="panel__header"><div class="panel__title">📍 تعريف فرع/موقع جديد</div></div>
+              <div class="panel__body">
+                <form id="addLocationForm" onsubmit="adminAddLocation(event)">
+                  <div class="form-group">
+                    <label>الاسم</label>
+                    <input type="text" name="name" required placeholder="مثال: صيدلية فرع الشمال">
+                  </div>
+                  <div class="form-group">
+                    <label>النوع</label>
+                    <select name="type" required>
+                      <option value="Pharmacy">صيدلية</option>
+                      <option value="Warehouse">مستودع مركزي</option>
+                      <option value="Exporter">مُصدّر خارجي</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn-primary" style="width:100%">حفظ الفرع</button>
+                </form>
+              </div>
+            </div>
+
+          </div> <!-- /panels -->
+
+          <!-- Lists: Products & Batches -->
+          <div class="panels" style="grid-template-columns: 1fr 1fr; margin-top: 2rem; align-items: start;">
+            <!-- Defined Products List -->
+            <div class="panel fade-in">
+              <div class="panel__header">
+                <div class="panel__title">📋 الأدوية المعرفة</div>
+              </div>
+              <div class="panel__body" id="definedProductsList">
+                <div class="empty-state">جاري التحميل...</div>
+              </div>
+            </div>
+
+            <!-- Defined Batches List -->
+            <div class="panel fade-in">
+              <div class="panel__header">
+                <div class="panel__title">📦 التشغيلات (Batches)</div>
+              </div>
+              <div class="panel__body" id="definedBatchesList">
+                <div class="empty-state">جاري التحميل...</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div> <!-- /content-wrapper -->
+    </main>
+  </div>
+
+  <!-- ═══ MODALS (Doctor Actions) ═══ -->
+  <div class="modal-overlay" id="receiveModal">
+    <div class="modal">
+      <div class="modal__header">
+        <div class="modal__title">➕ إضافة دواء للمخزون</div>
+        <button class="modal__close" onclick="closeModal('receiveModal')">&times;</button>
+      </div>
+      <form class="modal__form" id="receiveForm" onsubmit="handleReceive(event)">
+        <div class="form-group">
+          <label>الموقع (صيدليتك)</label>
+          <select name="location_id" required class="select-location"></select>
+        </div>
+        <div class="form-group">
+          <label>رقم التشغيلة (Batch)</label>
+          <select name="batch_no" required class="select-batch"></select>
+        </div>
+        <div class="form-group">
+          <label>الكمية المستلمة</label>
+          <input type="number" name="quantity" min="1" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem; background: var(--success);">تأكيد الإضافة</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deductModal">
+    <div class="modal">
+      <div class="modal__header">
+        <div class="modal__title">➖ صرف دواء</div>
+        <button class="modal__close" onclick="closeModal('deductModal')">&times;</button>
+      </div>
+      <form class="modal__form" id="deductForm" onsubmit="handleDeduct(event)">
+        <div class="form-group">
+          <label>صرف من (صيدليتك)</label>
+          <select name="location_id" required class="select-location"></select>
+        </div>
+        <div class="form-group">
+          <label>الدواء المطلوب</label>
+          <select name="product_id" required class="select-product"></select>
+        </div>
+        <div class="form-group">
+          <label>الكمية المصروفة</label>
+          <input type="number" name="quantity" min="1" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem; background: var(--danger);">تأكيد الصرف</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "vet-monitor",
+  "version": "1.0.0",
+  "description": "Vet Pharmacy & Supply Chain Management System",
+  "private": true,
+  "scripts": {
+    "migrate": "node db/migrate.js",
+    "migrate:down": "node db/migrate.js down",
+    "seed": "node db/seed.js",
+    "check:expiry": "node workers/expiry-alert.js",
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  }
+}
