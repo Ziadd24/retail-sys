@@ -48,6 +48,15 @@ app.use('/api/auth', require('./api/auth'));
 const { authenticate } = require('./api/middleware');
 app.use('/api', authenticate);
 
+// ─── Shutdown route (protected) ───────────────────────────────────────
+app.post('/api/shutdown', (req, res) => {
+  res.json({ success: true, message: 'Server is shutting down...' });
+  console.log('🛑 Shutdown request received. Exiting process in 1 second...');
+  setTimeout(() => {
+    process.exit(0);
+  }, 1000);
+});
+
 // ─── Route modules (protected) ────────────────────────────────────────
 app.use('/api/products',   require('./api/products'));
 app.use('/api/batches',    require('./api/batches'));

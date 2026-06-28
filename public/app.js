@@ -280,6 +280,27 @@ async function handleLoginSubmit(event) {
   }
 }
 
+async function shutdownServer() {
+  if (!confirm('هل أنت متأكد من رغبتك في إيقاف تشغيل النظام بالكامل؟')) return;
+  
+  try {
+    const res = await api('/shutdown', { method: 'POST' });
+    if (res.success) {
+      showToast('جاري إيقاف تشغيل الخادم... يمكنك إغلاق المتصفح الآن.', 'success');
+      document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#0f172a; color:#f8fafc; font-family:sans-serif; direction:rtl;">
+          <h1 style="color:#ef4444; font-size:2rem; margin-bottom:1rem;">🛑 تم إيقاف تشغيل النظام بنجاح</h1>
+          <p style="color:#94a3b8; font-size:1.1rem;">تم إغلاق خادم قاعدة البيانات والخدمة البيطرية بأمان.</p>
+          <p style="color:#64748b; font-size:0.9rem; margin-top:2rem;">يمكنك إغلاق نافذة المتصفح الآن.</p>
+        </div>
+      `;
+    }
+  } catch (err) {
+    showToast('فشل إيقاف تشغيل الخادم', 'error');
+  }
+}
+window.shutdownServer = shutdownServer;
+
 async function loadReferenceData() {
   const [locs, prods, bats] = await Promise.all([
     api('/locations'),
