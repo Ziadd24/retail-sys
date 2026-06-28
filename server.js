@@ -22,8 +22,10 @@ try {
   console.log('📦 Auto-migrating database...');
   require('child_process').execSync('npm run migrate', { stdio: 'inherit' });
 
-  // Seed default admin user
-  require('./lib/auth').seedDefaultUser();
+  // Seed default admin user and default locations
+  const authLib = require('./lib/auth');
+  authLib.seedDefaultUser();
+  authLib.seedDefaultLocations();
 } catch (err) {
   console.error('✖ Auto-setup failed:', err);
 }

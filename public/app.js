@@ -717,8 +717,10 @@ async function handleAdjust(e) {
 function getDatalistId(listId, value) {
   const list = document.getElementById(listId);
   if (!list) return null;
+  const valNorm = (value || '').trim().toLowerCase();
   for (let option of list.options) {
-    if (option.value === value) return option.getAttribute('data-id');
+    const optValNorm = (option.value || '').trim().toLowerCase();
+    if (optValNorm === valNorm) return option.getAttribute('data-id');
   }
   return null;
 }
