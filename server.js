@@ -75,14 +75,14 @@ app.use('/api/analytics',  require('./api/analytics'));
 app.use(errorHandler);
 
 // ─── Start ────────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  console.log(`🐾 Vet Monitor API running on http://localhost:${PORT}`);
-  console.log(`   Health check: http://localhost:${PORT}/api/health`);
+const server = app.listen(PORT, '127.0.0.1', () => {
+  console.log(`🐾 Vet Monitor API running on http://127.0.0.1:${PORT}`);
+  console.log(`   Health check: http://127.0.0.1:${PORT}/api/health`);
   
   // Auto-open browser only after the server is fully ready
   try {
     if (process.platform === 'win32') {
-      require('child_process').exec(`start http://localhost:${PORT}`);
+      require('child_process').exec(`start http://127.0.0.1:${PORT}`);
     }
   } catch (err) {}
 });
