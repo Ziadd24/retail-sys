@@ -89,6 +89,11 @@ function switchTab(tabId) {
   if (tabId === 'pharmacies') switchCategory('Pharmacy');
   if (tabId === 'warehouse') switchCategory('Warehouse');
 
+  if (tabId === 'analytics') {
+    loadAnalyticsDashboard();
+    loadAnalyticsPharmacies();
+  }
+
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.remove('active');
     if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`switchTab('${tabId}')`)) {
@@ -978,6 +983,40 @@ async function loadInventoryTable() {
   }
 }
 
+// Supplier Dashboard sorting state
+let supplierSortField = 'value'; // 'name' or 'value'
+let supplierSortDirection = 'desc';
+
+function setSupplierSort(field) {
+  if (supplierSortField === field) {
+    supplierSortDirection = supplierSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    supplierSortField = field;
+    supplierSortDirection = field === 'name' ? 'asc' : 'desc';
+  }
+  updateSupplierSortHeaders();
+  loadSupplierDashboard();
+}
+window.setSupplierSort = setSupplierSort;
+
+function updateSupplierSortHeaders() {
+  const headers = {
+    name: { el: $('th-sup-importer'), text: 'المورد (Importer)' },
+    value: { el: $('th-sup-value'), text: 'قيمة المخزون' }
+  };
+  
+  Object.keys(headers).forEach(key => {
+    const h = headers[key];
+    if (h.el) {
+      if (supplierSortField === key) {
+        h.el.innerHTML = h.text + (supplierSortDirection === 'asc' ? ' ▲' : ' ▼');
+      } else {
+        h.el.innerHTML = h.text;
+      }
+    }
+  });
+}
+
 async function loadSupplierDashboard() {
   try {
     const inv = state.inventory || [];
@@ -1018,8 +1057,18 @@ async function loadSupplierDashboard() {
       if (inv.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="empty-state">لا يوجد مخزون متاح حالياً.</td></tr>`;
       } else {
-        // Sort importers by value descending
-        const sortedImporters = importers.sort((a, b) => importerData[b].value - importerData[a].value);
+        // Sort importers based on selection
+        const sortedImporters = importers.sort((a, b) => {
+          if (supplierSortField === 'name') {
+            return supplierSortDirection === 'asc'
+              ? a.localeCompare(b, 'ar')
+              : b.localeCompare(a, 'ar');
+          } else { // 'value'
+            const valA = importerData[a].value || 0;
+            const valB = importerData[b].value || 0;
+            return supplierSortDirection === 'asc' ? valA - valB : valB - valA;
+          }
+        });
         
         let html = '';
         sortedImporters.forEach(imp => {
@@ -1052,6 +1101,9 @@ async function loadSupplierDashboard() {
         tbody.innerHTML = html;
       }
     }
+    
+    // Update visual indicators
+    updateSupplierSortHeaders();
   } catch(err) {
     console.error(err);
     showToast('فشل في تحليل بيانات الموردين', 'error');
@@ -1591,6 +1643,10 @@ function analyticsNavigate(viewId) {
   const view = $(`analytics-view-${viewId}`);
   if (view) view.style.display = 'block';
 
+  if (viewId === 'dashboard') {
+    loadAnalyticsDashboard();
+  }
+
   // Only save top-level views that don't depend on a specific item ID
   if (['dashboard', 'pharmacies-list', 'warehouse-profile', 'importers-profile', 'medicines-profile'].includes(viewId)) {
     localStorage.setItem('activeAnalyticsView', viewId);
@@ -1669,7 +1725,7 @@ async function loadAnalyticsWarehouseProfile() {
     
     // Header Data
     $('warehouseProfileCapacity').textContent = data.inventory.reduce((sum, i) => sum + i.quantity, 0).toLocaleString() + ' وحدة';
-    $('warehouseProfileValue').textContent = '$' + data.inventory.reduce((sum, i) => sum + (i.quantity * (i.unit_cost || 0)), 0).toLocaleString();
+    $('warehouseProfileValue').textContent = data.inventory.reduce((sum, i) => sum + (i.quantity * (i.unit_cost || 0)), 0).toLocaleString() + ' ر.س';
 
     // Section A: Inventory
     analyticsWhInventoryData = data.inventory;
@@ -2158,6 +2214,12 @@ async function loadAnalyticsImportersProfile() {
 
     // Section C: Profiles
     allImportersProfiles = data.all_profiles;
+    
+    // Reset sort to defaults on initial load
+    importersSortField = 'name';
+    importersSortDirection = 'asc';
+    updateImportersSortHeaders();
+    
     renderImpProfiles();
 
     analyticsNavigate('importers-profile');
@@ -2167,12 +2229,77 @@ async function loadAnalyticsImportersProfile() {
   }
 }
 
+// Sorting state variables
+let importersSortField = 'name';
+let importersSortDirection = 'asc';
+
+function setImportersSort(field) {
+  if (importersSortField === field) {
+    importersSortDirection = importersSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    importersSortField = field;
+    // Names default to alphabetical (asc), numbers to highest first (desc)
+    importersSortDirection = field === 'name' ? 'asc' : 'desc';
+  }
+  updateImportersSortHeaders();
+  renderImpProfiles();
+}
+window.setImportersSort = setImportersSort;
+
+function updateImportersSortHeaders() {
+  const headers = {
+    name: { el: $('th-imp-name'), text: 'المورد' },
+    products: { el: $('th-imp-products'), text: 'المنتجات المعروضة' },
+    qty: { el: $('th-imp-qty'), text: 'الكمية الموردة' },
+    spent: { el: $('th-imp-spent'), text: 'إجمالي الإنفاق' },
+    exclusive: { el: $('th-imp-exclusive'), text: 'احتكار' }
+  };
+  
+  Object.keys(headers).forEach(key => {
+    const h = headers[key];
+    if (h.el) {
+      if (importersSortField === key) {
+        h.el.innerHTML = h.text + (importersSortDirection === 'asc' ? ' ▲' : ' ▼');
+      } else {
+        h.el.innerHTML = h.text;
+      }
+    }
+  });
+}
+
 function renderImpProfiles() {
   const tbody = $('impProfileAllBody');
   const term = ($('impProfileSearch') ? $('impProfileSearch').value.toLowerCase() : '');
   
   let filtered = allImportersProfiles;
   if (term) filtered = filtered.filter(i => i.name.toLowerCase().includes(term));
+
+  // Apply sorting to the list of importers
+  filtered = [...filtered].sort((a, b) => {
+    let valA, valB;
+    if (importersSortField === 'name') {
+      valA = a.name || '';
+      valB = b.name || '';
+      return importersSortDirection === 'asc'
+        ? valA.localeCompare(valB, 'ar')
+        : valB.localeCompare(valA, 'ar');
+    } else if (importersSortField === 'products') {
+      valA = a.total_products || 0;
+      valB = b.total_products || 0;
+    } else if (importersSortField === 'qty') {
+      valA = a.total_orders || 0;
+      valB = b.total_orders || 0;
+    } else if (importersSortField === 'spent') {
+      valA = a.total_spent || 0;
+      valB = b.total_spent || 0;
+    } else if (importersSortField === 'exclusive') {
+      valA = a.exclusive_medicines || 0;
+      valB = b.exclusive_medicines || 0;
+    }
+    
+    if (valA === valB) return 0;
+    return importersSortDirection === 'asc' ? valA - valB : valB - valA;
+  });
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">لا يوجد موردين مطابقين للبحث</td></tr>';

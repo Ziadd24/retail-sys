@@ -184,11 +184,11 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>المورد (Importer)</th>
+                    <th id="th-sup-importer" class="sortable" onclick="setSupplierSort('name')">المورد (Importer)</th>
                     <th>اسم الدواء</th>
                     <th>الكمية المتوفرة</th>
                     <th>موقع التخزين</th>
-                    <th>قيمة المخزون</th>
+                    <th id="th-sup-value" class="sortable" onclick="setSupplierSort('value')">قيمة المخزون</th>
                   </tr>
                 </thead>
                 <tbody id="inventorySupplierTableBody">
@@ -624,7 +624,16 @@
                 </div>
                 <div class="panel__body" style="padding: 0;">
                   <table class="data-table">
-                    <thead><tr><th>المورد</th><th>المنتجات المعروضة</th><th>الكمية الموردة</th><th>إجمالي الإنفاق</th><th>الأدوية المورّدة</th><th>احتكار</th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th id="th-imp-name" class="sortable" onclick="setImportersSort('name')">المورد</th>
+                        <th id="th-imp-products" class="sortable" onclick="setImportersSort('products')">المنتجات المعروضة</th>
+                        <th id="th-imp-qty" class="sortable" onclick="setImportersSort('qty')">الكمية الموردة</th>
+                        <th id="th-imp-spent" class="sortable" onclick="setImportersSort('spent')">إجمالي الإنفاق</th>
+                        <th>الأدوية المورّدة</th>
+                        <th id="th-imp-exclusive" class="sortable" onclick="setImportersSort('exclusive')">احتكار</th>
+                      </tr>
+                    </thead>
                     <tbody id="impProfileAllBody"></tbody>
                   </table>
                 </div>
