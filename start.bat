@@ -1,5 +1,9 @@
 @echo off
 title Vet Monitor - Startup Utility
+
+:: Always run from the script's own folder, regardless of where it was launched from
+cd /d "%~dp0"
+
 echo ===================================================
 echo 🐾 Starting Vet Monitor System...
 echo ===================================================

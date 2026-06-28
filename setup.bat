@@ -1,5 +1,9 @@
 @echo off
 title Vet Monitor - First Time Setup
+
+:: Always run from the script's own folder, regardless of where it was launched from
+cd /d "%~dp0"
+
 echo ===================================================
 echo 🐾 Vet Monitor - Offline Installation Helper 🐾
 echo ===================================================
@@ -22,9 +26,9 @@ echo Please wait, this might take a minute depending on your internet speed...
 echo.
 
 :: Use PowerShell to download the official Node.js v22.11.0 MSI installer
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.11.0/node-v22.11.0-x64.msi' -OutFile 'node_installer.msi'"
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.11.0/node-v22.11.0-x64.msi' -OutFile '%~dp0node_installer.msi'"
 
-if not exist "node_installer.msi" (
+if not exist "%~dp0node_installer.msi" (
     echo ✖ [ERROR] Failed to download the installer automatically.
     echo Please open your browser and download Node.js manually from:
     echo https://nodejs.org/
@@ -37,11 +41,11 @@ if not exist "node_installer.msi" (
 echo [INFO] Opening the Node.js setup wizard...
 echo Please complete the setup wizard (you can click "Next" on all prompts).
 echo.
-start /wait msiexec.exe /i node_installer.msi
+start /wait msiexec.exe /i "%~dp0node_installer.msi"
 
 :: 4. Clean up installer file
-if exist "node_installer.msi" (
-    del node_installer.msi
+if exist "%~dp0node_installer.msi" (
+    del "%~dp0node_installer.msi"
 )
 
 echo ===================================================
