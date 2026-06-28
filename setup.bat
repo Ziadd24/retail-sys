@@ -4,19 +4,16 @@ echo ===================================================
 echo 🐾 Vet Monitor - Offline Installation Helper 🐾
 echo ===================================================
 echo.
-echo This script will help you install Node.js (required to run the system offline).
+echo This script will help you install Node.js (required to run the system offline)
+echo and create a desktop shortcut for easy access.
 echo.
 
 :: 1. Check if Node.js is already installed
 where node >nul 2>nul
 if %errorlevel% equ 0 (
     echo [INFO] Node.js is already installed!
-    echo You do not need to install it again.
     echo.
-    echo You can now close this window and double-click "start.bat" to run the system.
-    echo.
-    pause
-    exit /b 0
+    goto create_shortcut
 )
 
 :: 2. Download Node.js Installer
@@ -52,6 +49,18 @@ echo 🎉 Node.js installation wizard completed!
 echo ===================================================
 echo.
 echo Please restart your computer (or close and reopen your folders) 
-echo and then double-click "start.bat" to start the Vet Monitor system.
+echo so Windows registers the new installation.
+echo.
+
+:create_shortcut
+:: 5. Create Desktop Shortcut
+echo 🖥 [INFO] Creating a Desktop shortcut for the system...
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $s = $wsh.CreateShortcut(([Environment]::GetFolderPath('Desktop') + '\Fateh Vet Monitor.lnk')); $s.TargetPath = '%~dp0start.bat'; $s.WorkingDirectory = '%~dp0'; $s.Save()"
+if %errorlevel% equ 0 (
+    echo ✔ [SUCCESS] Desktop shortcut "Fateh Vet Monitor" created on your Desktop!
+) else (
+    echo ⚠ [WARNING] Failed to create desktop shortcut automatically.
+)
 echo.
 pause
+exit /b 0
