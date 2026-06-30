@@ -4,12 +4,12 @@
   "description": "Vet Pharmacy & Supply Chain Management System",
   "private": true,
   "scripts": {
-    "migrate": "node db/migrate.js",
-    "migrate:down": "node db/migrate.js down",
-    "seed": "node db/seed.js",
-    "check:expiry": "node workers/expiry-alert.js",
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "migrate": "node --experimental-sqlite db/migrate.js",
+    "migrate:down": "node --experimental-sqlite db/migrate.js down",
+    "seed": "node --experimental-sqlite db/seed.js",
+    "check:expiry": "node --experimental-sqlite workers/expiry-alert.js",
+    "start": "node --experimental-sqlite server.js",
+    "dev": "node --experimental-sqlite --watch server.js",
     "test": "node --test tests/e2e.test.js"
   },
   "dependencies": {
